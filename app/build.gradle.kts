@@ -49,12 +49,12 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
 
-val copyDebugApkToProjectRoot = tasks.register<Copy>("copyDebugApkToProjectRoot") {
+val copyDebugApkForDistribution = tasks.register<Copy>("copyDebugApkForDistribution") {
     from(layout.buildDirectory.dir("outputs/apk/debug")) {
         include("*.apk")
         rename { "synclyrics-debug.apk" }
     }
-    into(rootProject.layout.projectDirectory)
+    into(layout.buildDirectory.dir("outputs/distributions"))
     doFirst {
         check(fileTree(layout.buildDirectory.dir("outputs/apk/debug")) { include("*.apk") }.files.isNotEmpty()) {
             "No debug APK was produced to copy."
@@ -63,5 +63,5 @@ val copyDebugApkToProjectRoot = tasks.register<Copy>("copyDebugApkToProjectRoot"
 }
 
 tasks.matching { it.name == "assembleDebug" }.configureEach {
-    finalizedBy(copyDebugApkToProjectRoot)
+    finalizedBy(copyDebugApkForDistribution)
 }

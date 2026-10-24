@@ -47,7 +47,8 @@ jobs:
           path: build.log
       - uses: actions/upload-artifact@v7
         with:
-          path: synclyrics-debug.apk
+          name: synclyrics-debug-apk
+          path: app/build/outputs/distributions/synclyrics-debug.apk
           archive: false
       - uses: actions/upload-artifact@v7
         if: failure()
