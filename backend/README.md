@@ -31,3 +31,6 @@ Android emulator reaches it at `http://10.0.2.2:8080` (default). For a device/re
 - Word confidence is derived from the segment's `avg_logprob`, a rough proxy.
 - Job store is in memory (single instance). Use a DB/queue to scale or survive restarts.
 - Run behind HTTPS.
+
+## Railway
+Either set the service's **Root Directory** to `backend` (uses `backend/Dockerfile`), or leave it at the repo root (uses the root `Dockerfile`, which copies from `backend/`). Both work; a root of the wrong place gives `"/package.json": not found`.

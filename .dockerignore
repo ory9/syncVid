@@ -1,0 +1,7 @@
+app/
+docs/
+.github/
+backend/node_modules
+backend/dist
+backend/test
+.git

@@ -18,10 +18,22 @@ jobs:
         with:
           gradle-version: 8.11.1   # AGP 8.9.2 needs >= 8.11.1; no wrapper is committed
       - name: Unit tests + debug APK
-        run: >
-          gradle testDebugUnitTest assembleDebug --stacktrace
-          -Psynclyrics.backendUrl="${{ vars.BACKEND_URL }}"
-          -Psynclyrics.apiKey="${{ secrets.BACKEND_API_KEY }}"
+        run: |
+          set -o pipefail
+          gradle testDebugUnitTest assembleDebug --console=plain --stacktrace \
+            -Psynclyrics.backendUrl="${{ vars.BACKEND_URL }}" \
+            -Psynclyrics.apiKey="${{ secrets.BACKEND_API_KEY }}" 2>&1 | tee build.log
+      - name: Show compile errors only
+        if: failure()
+        run: |
+          echo "=== COMPILE ERRORS (paste these) ==="
+          grep -E '^(e|w): .*(error|\.kt)|^e: ' build.log | grep -E '^e: ' | head -60 || true
+          { echo '### Compile errors'; echo '```'; grep -E '^e: ' build.log | head -60; echo '```'; } >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-log
+          path: build.log
       - uses: actions/upload-artifact@v4
         with:
           name: synclyrics-debug-apk
