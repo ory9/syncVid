@@ -19,7 +19,6 @@ import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
-import com.google.common.collect.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -78,7 +77,7 @@ class VideoExporter(private val context: Context) {
         tempFile = out
 
         val overlay = LyricsOverlay(segments, info.width, info.height)
-        val effects: ImmutableList<Effect> = ImmutableList.of(OverlayEffect(ImmutableList.of(overlay)))
+        val effects: List<Effect> = listOf(OverlayEffect(listOf(overlay)))
         val item = EditedMediaItem.Builder(MediaItem.fromUri(source))
             .setEffects(Effects(emptyList(), effects))
             .build()
