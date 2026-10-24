@@ -56,3 +56,12 @@ Push this folder to a GitHub repo. The `Build` workflow runs the unit tests and 
 - API 26–28 saves to app-specific storage (no storage permission requested); API 29+ saves to `Movies/SyncLyrics`.
 - Verify on a real device with your own videos (portrait, rotated, long) before relying on it.
 - No Gradle wrapper is included; Android Studio will create one (AGP 8.9.2 needs Gradle 8.11.1+).
+
+## Building in GitHub Codespaces
+Needs JDK 17, Gradle 8.11.1+ (e.g. `sdk install gradle 8.11.1`) and the Android SDK (`sdkmanager "platforms;android-35" "build-tools;35.0.0"`, set `ANDROID_HOME`).
+`gradle.properties` is memory-tuned (2 workers, 3 GB heap, in-process Kotlin compiler). If a build still dies in `DefaultWorkerExecutor`, it is almost always OOM: switch the Codespace to an 8-core/32 GB machine, or:
+```bash
+gradle --stop
+gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+grep -n -E "What went wrong|Caused by|OutOfMemory|aapt2" build.log | head
+```
