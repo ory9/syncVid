@@ -7,14 +7,14 @@ on:
 
 jobs:
   android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: 8.11.1   # AGP 8.9.2 needs >= 8.11.1; no wrapper is committed
       - name: Unit tests + debug APK
@@ -40,26 +40,26 @@ jobs:
             grep -n -A12 -B3 -E 'What went wrong:|Execution failed for task|Caused by:|OutOfMemoryError|insufficient memory|unable to create native thread|Could not reserve enough space|GC overhead limit exceeded' build.log | tail -100 || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: build-log
           path: build.log
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
-          name: synclyrics-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
-      - uses: actions/upload-artifact@v4
+          path: synclyrics-debug.apk
+          archive: false
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: test-reports
           path: app/build/reports/tests/
 
   backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults: { run: { working-directory: backend } }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm, cache-dependency-path: backend/package-lock.json }
       - run: npm ci
