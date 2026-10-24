@@ -59,7 +59,7 @@ Push this folder to a GitHub repo. The `Build` workflow runs the unit tests and 
 
 ## Building in GitHub Codespaces
 Needs JDK 17, Gradle 8.11.1+ (e.g. `sdk install gradle 8.11.1`) and the Android SDK (`sdkmanager "platforms;android-35" "build-tools;35.0.0"`, set `ANDROID_HOME`).
-`gradle.properties` is memory-tuned (2 workers, 3 GB heap, in-process Kotlin compiler). If a build still dies in `DefaultWorkerExecutor`, it is almost always OOM: switch the Codespace to an 8-core/32 GB machine, or:
+`gradle.properties` is memory-tuned (1 worker, 3 GB heap, in-process Kotlin compiler) to limit memory spikes in Gradle workers. If a build still fails, inspect the first `What went wrong` and `Caused by` entries in the Gradle output:
 ```bash
 gradle --stop
 gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log

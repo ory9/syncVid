@@ -42,7 +42,11 @@ export class OpenAITranscriber implements Transcriber {
     form.append("timestamp_granularities[]", "segment");
     if (this.languages.has(language)) form.set("language", language);
 
-    const res = await fetch(`${OPENAI}/audio/transcriptions`, { method: "POST", headers: { Authorization: `Bearer ${this.apiKey}` }, body: form });
+    const res = await fetch(`${OPENAI}/audio/transcriptions`, {
+      method: "POST",
+      headers: { Authorization: "Bearer " + this.apiKey },
+      body: form
+    });
     if (!res.ok) throw new Error(`Transcription provider error ${res.status}`);
     const data = (await res.json()) as {
       words?: { word: string; start: number; end: number }[];
@@ -65,7 +69,7 @@ export class OpenAITranslator implements Translator {
     if (!lines.length) return [];
     const res = await fetch(`${OPENAI}/chat/completions`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${this.apiKey}`, "Content-Type": "application/json" },
+      headers: { Authorization: "Bearer " + this.apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: this.model,
         response_format: { type: "json_object" },

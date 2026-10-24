@@ -20,15 +20,26 @@ jobs:
       - name: Unit tests + debug APK
         run: |
           set -o pipefail
-          gradle testDebugUnitTest assembleDebug --console=plain --stacktrace \
+          gradle testDebugUnitTest assembleDebug --console=plain --stacktrace --max-workers=1 \
             -Psynclyrics.backendUrl="${{ vars.BACKEND_URL }}" \
             -Psynclyrics.apiKey="${{ secrets.BACKEND_API_KEY }}" 2>&1 | tee build.log
-      - name: Show compile errors only
+      - name: Summarize Gradle failure
         if: failure()
         run: |
           echo "=== COMPILE ERRORS (paste these) ==="
-          grep -E '^(e|w): .*(error|\.kt)|^e: ' build.log | grep -E '^e: ' | head -60 || true
-          { echo '### Compile errors'; echo '```'; grep -E '^e: ' build.log | head -60; echo '```'; } >> "$GITHUB_STEP_SUMMARY" || true
+          grep -E '^e: ' build.log | head -60 || true
+          echo "=== GRADLE FAILURE DETAILS ==="
+          grep -n -A12 -B3 -E 'What went wrong:|Execution failed for task|Caused by:|OutOfMemoryError|insufficient memory|unable to create native thread|Could not reserve enough space|GC overhead limit exceeded' build.log | tail -100 || true
+          {
+            echo '### Compile errors'
+            echo '```'
+            grep -E '^e: ' build.log | head -60 || true
+            echo '```'
+            echo '### Gradle failure details'
+            echo '```'
+            grep -n -A12 -B3 -E 'What went wrong:|Execution failed for task|Caused by:|OutOfMemoryError|insufficient memory|unable to create native thread|Could not reserve enough space|GC overhead limit exceeded' build.log | tail -100 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

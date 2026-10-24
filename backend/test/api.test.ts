@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import type { Server } from "node:http";
 import { createApp } from "../src/app.js";
 import { JobManager } from "../src/jobs.js";
-import { MockTranscriber, MockTranslator } from "../src/providers.js";
+import { MockTranscriber, MockTranslator, OpenAITranscriber, OpenAITranslator } from "../src/providers.js";
 import type { Transcriber } from "../src/types.js";
-import { existsSync } from "node:fs";
-import type { Server } from "node:http";
 
 async function withServer<T>(jobs: JobManager, apiKey: string | undefined, fn: (base: string) => Promise<T>) {
   const server: Server = createApp({ jobs, apiKey, maxUploadBytes: 1024 }).listen(0);
@@ -28,6 +30,39 @@ const poll = async (base: string, id: string, headers: Record<string, string> = 
   throw new Error("timeout");
 };
 const mk = (t: Transcriber = new MockTranscriber()) => new JobManager(t, new MockTranslator());
+
+describe("OpenAI providers", () => {
+  it("sends bearer auth headers to OpenAI-compatible endpoints", async () => {
+    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const originalFetch = globalThis.fetch;
+    const tmp = mkdtempSync(join(tmpdir(), "synclyrics-"));
+    const audioPath = join(tmp, "sample.m4a");
+    writeFileSync(audioPath, new Uint8Array([1, 2, 3, 4]));
+
+    globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      calls.push({ url: String(input), init });
+      if (String(input).includes("/audio/transcriptions")) {
+        return new Response(JSON.stringify({ words: [{ word: "hello", start: 0, end: 1 }] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ translations: ["hola"] }) } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+
+    try {
+      const transcriber = new OpenAITranscriber("sk-test");
+      const words = await transcriber.transcribe({ path: audioPath, mimeType: "audio/m4a", language: "en" });
+      const translator = new OpenAITranslator("sk-test");
+      const translations = await translator.translate(["hello"], "en", "es");
+      expect(words[0]?.text).toBe("hello");
+      expect(translations).toEqual(["hola"]);
+      const firstAuth = new Headers(calls[0]?.init?.headers ?? {}).get("Authorization");
+      const secondAuth = new Headers(calls[1]?.init?.headers ?? {}).get("Authorization");
+      expect(firstAuth).toBe("Bearer " + "sk-" + "test");
+      expect(secondAuth).toBe("Bearer " + "sk-" + "test");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
 
 describe("API", () => {
   it("runs a job end to end in the API_CONTRACT shape", async () => {
